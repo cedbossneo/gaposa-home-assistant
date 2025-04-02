@@ -1,10 +1,10 @@
 {
   "domain": "gaposa",
   "name": "Gaposa",
-  "codeowners": ["@cedric"],
+  "codeowners": ["@cedbossneo"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/cedric/pygaposa",
+  "documentation": "https://github.com/cedbossneo/gaposa-homeassistant",
   "iot_class": "cloud_polling",
   "requirements": ["aiohttp", "typeguard", "suncalc"],
   "version": "0.1.0"
