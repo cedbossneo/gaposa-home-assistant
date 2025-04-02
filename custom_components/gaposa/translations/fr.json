@@ -7,12 +7,6 @@
           "email": "Email",
           "password": "Mot de passe"
         }
-      },
-      "client": {
-        "title": "Sélection du client",
-        "data": {
-          "client": "Client"
-        }
       }
     },
     "error": {
