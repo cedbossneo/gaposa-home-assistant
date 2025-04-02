@@ -1,0 +1,26 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion à Gaposa",
+        "data": {
+          "email": "Email",
+          "password": "Mot de passe"
+        }
+      },
+      "client": {
+        "title": "Sélection du client",
+        "data": {
+          "client": "Client"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Identifiant ou mot de passe incorrect",
+      "unknown": "Erreur inattendue"
+    },
+    "abort": {
+      "already_configured": "Compte déjà configuré"
+    }
+  }
+}

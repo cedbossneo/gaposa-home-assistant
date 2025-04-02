@@ -1,0 +1,11 @@
+{
+  "domain": "gaposa",
+  "name": "Gaposa",
+  "codeowners": ["@cedric"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/cedric/pygaposa",
+  "iot_class": "cloud_polling",
+  "requirements": ["aiohttp", "typeguard", "suncalc"],
+  "version": "0.1.0"
+}
