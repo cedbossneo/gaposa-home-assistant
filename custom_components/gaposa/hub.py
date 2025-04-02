@@ -59,15 +59,17 @@ class GaposaHub:
     async def update_data(self) -> None:
         """Update data from Gaposa."""
         if not self.api or not self._is_connected:
+            _LOGGER.warning("Tentative de mise à jour sans connexion active")
             return
 
         try:
+            _LOGGER.debug("Mise à jour des données Gaposa")
             await self.api.update()
             
             # Récupérer tous les moteurs
+            old_motors_count = len(self._motors)
             self._motors = []
             
-            _LOGGER.debug("Mise à jour des données Gaposa")
             for client_idx, (client, _) in enumerate(self.api.clients):
                 _LOGGER.debug("Client %d: %s", client_idx, client.name)
                 await client.update()

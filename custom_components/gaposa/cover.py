@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -14,7 +14,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+)
 
+from .coordinator import GaposaDataUpdateCoordinator
 from .const import DOMAIN
 from .hub import GaposaHub
 
@@ -25,10 +29,12 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     """Set up the Gaposa covers."""
-    hub: GaposaHub = hass.data[DOMAIN][entry.entry_id]
+    data = hass.data[DOMAIN][entry.entry_id]
+    hub: GaposaHub = data["hub"]
+    coordinator: GaposaDataUpdateCoordinator = data["coordinator"]
     
     # Forcer une mise à jour des données pour s'assurer d'avoir les moteurs
-    await hub.update_data()
+    await coordinator.async_refresh()
     
     # Création des entités pour chaque moteur
     entities = []
@@ -36,7 +42,7 @@ async def async_setup_entry(
     
     for motor in hub.motors:
         _LOGGER.debug("Ajout du moteur %s (ID: %s)", motor.name, motor.id)
-        entities.append(GaposaCover(hub, motor))
+        entities.append(GaposaCover(coordinator, hub, motor))
     
     if entities:
         _LOGGER.info("Ajout de %d entités cover", len(entities))
@@ -45,13 +51,17 @@ async def async_setup_entry(
         _LOGGER.warning("Aucune entité cover à ajouter")
 
 
-class GaposaCover(CoverEntity):
+class GaposaCover(CoordinatorEntity, CoverEntity):
     """Representation of a Gaposa cover."""
 
-    def __init__(self, hub: GaposaHub, motor) -> None:
+    coordinator: GaposaDataUpdateCoordinator
+
+    def __init__(self, coordinator: GaposaDataUpdateCoordinator, hub: GaposaHub, motor) -> None:
         """Initialize the cover."""
+        super().__init__(coordinator)
         self._hub = hub
         self._motor = motor
+        self._motor_id = motor.id
         self._attr_name = motor.name
         self._attr_unique_id = f"{motor.id}"
         self._attr_device_class = CoverDeviceClass.SHADE
@@ -66,16 +76,13 @@ class GaposaCover(CoverEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        self._update_attrs()
+        # Trouver le moteur correspondant dans les données mises à jour
+        for motor in self.coordinator.data["motors"]:
+            if motor.id == self._motor_id:
+                self._motor = motor
+                self._update_attrs()
+                break
         self.async_write_ha_state()
-
-    async def async_added_to_hass(self) -> None:
-        """When entity is added to hass."""
-        self._hub.register_callback(self._handle_coordinator_update)
-    
-    async def async_will_remove_from_hass(self) -> None:
-        """When entity will be removed from hass."""
-        self._hub.remove_callback(self._handle_coordinator_update)
     
     def _update_attrs(self) -> None:
         """Update the attributes based on motor status."""
@@ -83,7 +90,15 @@ class GaposaCover(CoverEntity):
             # Position inversée: 0 = fermé, 100 = ouvert dans HA
             self._attr_current_cover_position = 100 - self._motor.percent
             self._attr_is_closed = self._motor.percent >= 95
+            _LOGGER.debug(
+                "Mise à jour du moteur %s (ID: %s): position=%s, fermé=%s",
+                self._attr_name, self._motor_id, self._attr_current_cover_position, self._attr_is_closed
+            )
         else:
+            _LOGGER.warning(
+                "Le moteur %s n'a pas d'attribut 'percent'. Attributs disponibles: %s",
+                self._attr_name, dir(self._motor)
+            )
             self._attr_current_cover_position = None
             self._attr_is_closed = None
     
@@ -91,16 +106,22 @@ class GaposaCover(CoverEntity):
         """Open the cover."""
         await self._motor.up()
         self._update_attrs()
+        # Déclencher une mise à jour immédiate pour tous les appareils
+        await self.coordinator.async_request_refresh()
     
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close the cover."""
         await self._motor.down()
         self._update_attrs()
+        # Déclencher une mise à jour immédiate pour tous les appareils
+        await self.coordinator.async_request_refresh()
     
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
         await self._motor.stop()
         self._update_attrs()
+        # Déclencher une mise à jour immédiate pour tous les appareils
+        await self.coordinator.async_request_refresh()
     
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Set the cover position."""
@@ -116,18 +137,17 @@ class GaposaCover(CoverEntity):
             # Si vous avez besoin d'une méthode pour définir une position spécifique
             # vous devrez l'implémenter
             await self._motor.preset()
+        
         self._update_attrs()
-    
-    async def async_update(self) -> None:
-        """Update the cover status."""
-        await self._hub.update_data()
+        # Déclencher une mise à jour immédiate pour tous les appareils
+        await self.coordinator.async_request_refresh()
     
     @property
     def device_info(self) -> DeviceInfo:
         """Return device information."""
         return DeviceInfo(
-            identifiers={(DOMAIN, self._motor.id)},
-            name=self._motor.name,
+            identifiers={(DOMAIN, self._motor_id)},
+            name=self._attr_name,
             manufacturer="Gaposa",
             model="Motorized Shade",
         )

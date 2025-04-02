@@ -11,6 +11,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
 from .hub import GaposaHub
+from .coordinator import GaposaDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,10 +38,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not await hub.connect():
         return False
     
-    # Stocker l'hub dans les données de hass et dans entry.runtime_data
+    # Créer le coordinateur qui va gérer les mises à jour périodiques
+    coordinator = GaposaDataUpdateCoordinator(hass, hub)
+    
+    # Effectuer une première mise à jour
+    await coordinator.async_config_entry_first_refresh()
+    
+    # Stocker le hub et le coordinateur dans les données de hass
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = hub
-    entry.runtime_data = hub
+    hass.data[DOMAIN][entry.entry_id] = {
+        "hub": hub,
+        "coordinator": coordinator,
+    }
     
     # Configuration des plateformes
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -56,8 +65,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     
     if unload_ok and entry.entry_id in hass.data[DOMAIN]:
-        hub = hass.data[DOMAIN].pop(entry.entry_id)
+        hub = hass.data[DOMAIN][entry.entry_id]["hub"]
         await hub.close()
+        hass.data[DOMAIN].pop(entry.entry_id)
     
     return unload_ok
 
