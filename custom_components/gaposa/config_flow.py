@@ -7,12 +7,10 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant import exceptions
 
-from pygaposa.gaposa import Gaposa, GaposaAuthException
-
-from .const import DOMAIN, API_KEY
+from .const import DOMAIN
+from .hub import GaposaHub
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,36 +23,29 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 
 async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
-    """Validate the user input allows us to connect.
+    """Validate the user input allows us to connect."""
+    hub = GaposaHub(hass, data[CONF_EMAIL], data[CONF_PASSWORD])
     
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-    session = async_get_clientsession(hass)
-    gaposa = Gaposa(API_KEY, websession=session)
-
-    try:
-        await gaposa.login(data[CONF_EMAIL], data[CONF_PASSWORD])
-    except GaposaAuthException as ex:
-        _LOGGER.error("Authentication failed: %s", ex)
-        raise InvalidAuth from ex
-    except Exception as ex:
-        _LOGGER.exception("Unexpected exception")
-        raise CannotConnect from ex
-    finally:
-        await gaposa.close()
-
+    if not await hub.test_connection():
+        raise CannotConnect
+    
+    await hub.connect()  # Pour récupérer les informations du client
+    
     # Utiliser le premier client (nous n'avons pas besoin de stocker l'ID)
-    first_client, _ = gaposa.clients[0]
-    return {
-        "title": f"Gaposa ({first_client.name})"
-    }
+    title = "Gaposa"
+    if hub.api and hub.api.clients:
+        first_client, _ = hub.api.clients[0]
+        title = f"Gaposa ({first_client.name})"
+    
+    await hub.close()
+    
+    return {"title": title}
 
 
 class GaposaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Gaposa."""
 
     VERSION = 1
-    # Connection class indicates to HA if this integration can work with or without internet
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     async def async_step_user(
@@ -67,16 +58,16 @@ class GaposaConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 info = await validate_input(self.hass, user_input)
                 
-                # Créer l'entrée (pas besoin de stocker l'ID du client)
+                # Créer l'entrée
                 return self.async_create_entry(
                     title=info["title"],
                     data=user_input
                 )
             
-            except InvalidAuth:
-                errors["base"] = "invalid_auth"
             except CannotConnect:
                 errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

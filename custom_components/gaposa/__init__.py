@@ -9,59 +9,59 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from pygaposa.gaposa import Gaposa
-
-from .const import DOMAIN, API_KEY
+from .const import DOMAIN
+from .hub import GaposaHub
 
 _LOGGER = logging.getLogger(__name__)
 
 # Liste des plateformes que cette intégration prend en charge
-# À ajuster selon vos besoins (cover, switch, etc.)
 PLATFORMS = [Platform.COVER]
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Set up the Gaposa component."""
+    hass.data.setdefault(DOMAIN, {})
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Gaposa from a config entry."""
-    session = async_get_clientsession(hass)
+    # Créer l'instance du hub Gaposa
+    hub = GaposaHub(
+        hass,
+        entry.data[CONF_EMAIL],
+        entry.data[CONF_PASSWORD]
+    )
     
-    # Créer l'instance Gaposa
-    gaposa = Gaposa(API_KEY, websession=session)
+    # Connecter au service Gaposa
+    if not await hub.connect():
+        return False
     
-    # Connexion au service Gaposa
-    await gaposa.login(entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
-    
-    # Stocker l'objet Gaposa dans les données de hass pour les plateformes
+    # Stocker l'hub dans les données de hass et dans entry.runtime_data
     hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = gaposa
+    hass.data[DOMAIN][entry.entry_id] = hub
+    entry.runtime_data = hub
     
     # Configuration des plateformes
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     
-    # Enregistrer une fonction de nettoyage pour fermer la session lorsque l'entrée est supprimée
-    entry.async_on_unload(entry.add_update_listener(update_listener))
+    # Ajouter un listener pour le déchargement de l'entrée
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
     
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    # Déchargement des plateformes
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     
-    if unload_ok:
-        # Récupération et fermeture de l'instance Gaposa
-        gaposa = hass.data[DOMAIN].pop(entry.entry_id)
-        await gaposa.close()
+    if unload_ok and entry.entry_id in hass.data[DOMAIN]:
+        hub = hass.data[DOMAIN].pop(entry.entry_id)
+        await hub.close()
     
     return unload_ok
 
 
-async def update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Handle options update."""
+async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Update options."""
     await hass.config_entries.async_reload(entry.entry_id)
-
-
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Gaposa component from yaml configuration."""
-    # Cette fonction est nécessaire mais nous utilisons config_entries
-    return True
