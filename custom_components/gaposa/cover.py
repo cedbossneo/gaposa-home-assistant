@@ -33,7 +33,11 @@ async def async_setup_entry(
     
     entities = []
     
-    # Vérifier que l'index du client est valide
+    # Utiliser toujours le premier client
+    if not gaposa.clients:
+        _LOGGER.error("No clients found")
+        return
+        
     selected_client, _ = gaposa.clients[0]
             
     # Add a cover entity for each motor
@@ -50,12 +54,19 @@ async def async_setup_entry(
                     )
                 )
     
+    if not entities:
+        _LOGGER.info("No covers found")
+        return
+        
+    _LOGGER.info("Adding %s Gaposa cover entities", len(entities))
     async_add_entities(entities)
 
 
 class GaposaCover(CoordinatorEntity, CoverEntity):
     """Representation of a Gaposa cover."""
 
+    _attr_has_entity_name = True
+    
     def __init__(
         self, 
         coordinator: GaposaCoordinator, 
@@ -67,13 +78,8 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
         """Initialize the cover."""
         super().__init__(coordinator)
         self._motor = motor
-        self._device_id = device_id
-        self._room_name = room_name
-        self._user_email = user_email
-        
-        # Set unique ID format
         self._attr_unique_id = f"{DOMAIN}_{device_id}_{motor.id}"
-        self._attr_name = f"{room_name} - {motor.name}"
+        self._attr_name = motor.name
         self._attr_device_class = CoverDeviceClass.BLIND
         
         # Support up, down, stop and position
@@ -83,19 +89,24 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
             | CoverEntityFeature.STOP
         )
         
-        # Device info for device registry
+        # Device registry entry
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device_id)},
+            identifiers={(DOMAIN, f"{device_id}_{room_name}")},
             manufacturer="Gaposa",
-            name=f"Gaposa {device_id}",
-            model="Gaposa Motor",
-            via_device=(DOMAIN, user_email),
+            name=f"{room_name}",
+            model="Motorized Cover",
+            via_device=(DOMAIN, device_id),
         )
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return self.coordinator.last_update_success and self._motor is not None
 
     @property
     def is_closed(self) -> bool | None:
         """Return if the cover is closed."""
-        # Check if motor position is 0% (fully closed) or 100% depending on direction
+        # Check if motor position is 0% (fully closed)
         if self._motor.percent == 0:
             return True
         # Not closed if we're moving or at any other position
@@ -104,7 +115,6 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
     @property
     def current_cover_position(self) -> int | None:
         """Return the current position of the cover."""
-        # Convert to HA position (0 is closed, 100 is open)
         return self._motor.percent
 
     @property
@@ -120,11 +130,17 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
         await self._motor.up()
+        # Schedule a state refresh after a delay
+        self.async_schedule_update_ha_state(True)
 
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close cover."""
         await self._motor.down()
+        # Schedule a state refresh after a delay
+        self.async_schedule_update_ha_state(True)
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
         await self._motor.stop()
+        # Schedule a state refresh after a delay
+        self.async_schedule_update_ha_state(True)

@@ -11,6 +11,7 @@
     },
     "error": {
       "invalid_auth": "Identifiant ou mot de passe incorrect",
+      "cannot_connect": "Impossible de se connecter au serveur Gaposa",
       "unknown": "Erreur inattendue"
     },
     "abort": {
