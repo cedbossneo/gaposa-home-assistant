@@ -1,8 +1,8 @@
 import asyncio
 
-from pygaposa.api_types import Command, GroupInfo
-from pygaposa.devicebase import DeviceBase
-from pygaposa.model import Controllable, Named, expectedState
+from .api_types import Command, GroupInfo
+from .devicebase import DeviceBase
+from .model import Controllable, Named, expectedState
 
 
 class Group(Controllable):

@@ -2,11 +2,11 @@ from typing import Dict
 
 import pytest
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import Command, GroupInfo
-from pygaposa.devicebase import DeviceBase
-from pygaposa.group import Group
-from pygaposa.model import Motor
+from ..api import GaposaApi
+from ..api_types import Command, GroupInfo
+from ..devicebase import DeviceBase
+from ..group import Group
+from ..model import Motor
 
 
 class TestGroup:

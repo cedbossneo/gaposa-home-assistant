@@ -1,6 +1,6 @@
-from pygaposa.api_types import RoomInfo
-from pygaposa.devicebase import DeviceBase
-from pygaposa.model import Named, Updatable
+from .api_types import RoomInfo
+from .devicebase import DeviceBase
+from .model import Named, Updatable
 
 
 class Room(Updatable):

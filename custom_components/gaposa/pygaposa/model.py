@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-from pygaposa.api_types import Channel, Command
+from .api_types import Channel, Command
 
 
 class Named:

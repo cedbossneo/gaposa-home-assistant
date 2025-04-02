@@ -5,7 +5,7 @@ from typing import Awaitable, Callable, Literal, Optional, Union
 from aiohttp import ClientSession
 from typeguard import check_type
 
-from pygaposa.api_types import (
+from .api_types import (
     ApiControlRequest,
     ApiControlRequestChannel,
     ApiControlResponse,

@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.exceptions import ConfigEntryAuthFailed
 
-from pygaposa.gaposa import Gaposa, GaposaAuthException
+from .pygaposa.gaposa import Gaposa, GaposaAuthException
 
 from .const import DOMAIN
 

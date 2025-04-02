@@ -7,8 +7,8 @@ from aioresponses import CallbackResult, aioresponses
 from typeguard import TypeCheckError
 from yarl import URL
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import Command, ScheduleEventType
+from ..api import GaposaApi
+from ..api_types import Command, ScheduleEventType
 
 from .api_test_data import (
     add_schedule_update,

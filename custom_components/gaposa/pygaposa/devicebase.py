@@ -4,11 +4,11 @@ from typing import Callable, Optional, Union
 
 from typeguard import check_type
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import DeviceDocument, DeviceInfo
-from pygaposa.firebase import FirestorePath
-from pygaposa.model import Motor, Named, Updatable
-from pygaposa.poll_manager import PollMagagerConfig, PollManager
+from .api import GaposaApi
+from .api_types import DeviceDocument, DeviceInfo
+from .firebase import FirestorePath
+from .model import Motor, Named, Updatable
+from .poll_manager import PollMagagerConfig, PollManager
 
 
 class DeviceBase(Updatable):

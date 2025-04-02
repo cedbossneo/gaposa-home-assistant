@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from pygaposa.poll_manager import PollMagagerConfig, PollManager
+from ..poll_manager import PollMagagerConfig, PollManager
 
 
 @pytest.fixture

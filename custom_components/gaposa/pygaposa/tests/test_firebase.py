@@ -4,7 +4,7 @@ from unittest import mock
 import aiohttp
 import pytest
 
-from pygaposa.firebase import FirebaseApp, FirebaseAuth, FirebaseConfig, initialize_app
+from ..firebase import FirebaseApp, FirebaseAuth, FirebaseConfig, initialize_app
 
 
 def test_has_auth():
@@ -52,7 +52,7 @@ def test_firestore(monkeypatch):
     assert firestore_path.path == dummy_path
 
 
-@mock.patch("pygaposa.firebase.FirebaseApp", return_value="firebase_app")
+@mock.patch(".firebase.FirebaseApp", return_value="firebase_app")
 def test_initialize_app(mock_firebase_app):
     firebase_config: FirebaseConfig = {}  # type: ignore
     loop: asyncio.AbstractEventLoop = mock.MagicMock(spec=asyncio.AbstractEventLoop)

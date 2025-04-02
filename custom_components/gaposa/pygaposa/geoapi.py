@@ -3,7 +3,7 @@ from typing import Literal, TypedDict
 
 import aiohttp
 
-from pygaposa.api_types import Location
+from .api_types import Location
 
 
 class ApiTimezoneResponse(TypedDict):

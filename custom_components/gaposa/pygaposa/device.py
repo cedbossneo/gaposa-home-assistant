@@ -2,22 +2,22 @@ import asyncio
 from logging import Logger
 from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import (
+from .api import GaposaApi
+from .api_types import (
     DeviceInfo,
     EventDays,
     EventRepeat,
     NamedItem,
     ScheduleUpdate,
 )
-from pygaposa.devicebase import DeviceBase
-from pygaposa.firebase import FirestorePath
-from pygaposa.group import Group
-from pygaposa.model import NamedType, Updatable
-from pygaposa.motor import Motor, MotorImpl
-from pygaposa.poll_manager import PollMagagerConfig, PollManager
-from pygaposa.room import Room
-from pygaposa.schedule import Schedule
+from .devicebase import DeviceBase
+from .firebase import FirestorePath
+from .group import Group
+from .model import NamedType, Updatable
+from .motor import Motor, MotorImpl
+from .poll_manager import PollMagagerConfig, PollManager
+from .room import Room
+from .schedule import Schedule
 
 ItemType = TypeVar("ItemType", bound=Updatable)
 InitializerType = TypeVar("InitializerType", bound=NamedItem)

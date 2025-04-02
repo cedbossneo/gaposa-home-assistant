@@ -2,10 +2,10 @@ from typing import Dict
 
 import pytest
 
-from pygaposa.api_types import RoomInfo
-from pygaposa.devicebase import DeviceBase
-from pygaposa.model import Motor
-from pygaposa.room import Room
+from ..api_types import RoomInfo
+from ..devicebase import DeviceBase
+from ..model import Motor
+from ..room import Room
 
 
 class TestRoom:

@@ -2,10 +2,10 @@ from typing import Dict
 
 import pytest
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import Channel, Command, GroupInfo
-from pygaposa.devicebase import DeviceBase
-from pygaposa.motor import MotorImpl
+from ..api import GaposaApi
+from ..api_types import Channel, Command, GroupInfo
+from ..devicebase import DeviceBase
+from ..motor import MotorImpl
 
 
 class TestMotor:

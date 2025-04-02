@@ -5,8 +5,8 @@ from unittest.mock import MagicMock
 import pytest
 import suncalc
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import (
+from ..api import GaposaApi
+from ..api_types import (
     EventDays,
     EventMode,
     EventRepeat,
@@ -15,9 +15,9 @@ from pygaposa.api_types import (
     ScheduleInfo,
     ScheduleUpdate,
 )
-from pygaposa.devicebase import DeviceBase
-from pygaposa.model import Motor, Named, Updatable
-from pygaposa.schedule import Schedule, ScheduleEvent, getEventRepeat
+from ..devicebase import DeviceBase
+from ..model import Motor, Named, Updatable
+from ..schedule import Schedule, ScheduleEvent, getEventRepeat
 
 
 @pytest.fixture

@@ -1,4 +1,4 @@
-from pygaposa.api_types import (
+from ..api_types import (
     ApiControlRequest,
     ApiControlResponse,
     ApiLoginResponse,

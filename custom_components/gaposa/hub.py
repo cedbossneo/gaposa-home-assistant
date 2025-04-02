@@ -5,8 +5,9 @@ from typing import Any, Callable, List, Optional
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from pygaposa.gaposa import Gaposa, GaposaAuthException
-from pygaposa.motor import Motor
+# Importer depuis le sous-module local
+from .pygaposa.gaposa import Gaposa, GaposaAuthException 
+from .pygaposa.motor import Motor
 
 from .const import API_KEY
 

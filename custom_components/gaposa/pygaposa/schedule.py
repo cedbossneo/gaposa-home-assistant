@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 import suncalc  # type: ignore
 
-from pygaposa.api_types import (
+from .api_types import (
     EventDays,
     EventMode,
     EventRepeat,
@@ -13,8 +13,8 @@ from pygaposa.api_types import (
     ScheduleInfo,
     ScheduleUpdate,
 )
-from pygaposa.devicebase import DeviceBase
-from pygaposa.model import Named, Updatable
+from .devicebase import DeviceBase
+from .model import Named, Updatable
 
 
 class ScheduleEvent:

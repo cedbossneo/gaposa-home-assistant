@@ -6,6 +6,6 @@
   "dependencies": [],
   "documentation": "https://github.com/cedbossneo/gaposa-homeassistant",
   "iot_class": "cloud_polling",
-  "requirements": ["aiohttp", "typeguard", "suncalc"],
+  "requirements": ["typeguard", "suncalc"],
   "version": "0.1.0"
 }

@@ -1,3 +1,5 @@
+"""Pygaposa package for Gaposa API."""
+
 from . import __meta__
 from .client import Client
 from .device import Device

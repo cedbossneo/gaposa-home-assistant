@@ -4,17 +4,17 @@ from typing import Optional
 
 import aiohttp
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import ApiLoginResponse
-from pygaposa.client import Client, User
-from pygaposa.firebase import (
+from .api import GaposaApi
+from .api_types import ApiLoginResponse
+from .client import Client, User
+from .firebase import (
     FirebaseAuth,
     FirebaseAuthException,
     FirestorePath,
     initialize_app,
 )
-from pygaposa.geoapi import GeoApi
-from pygaposa.poll_manager import DefaultPollManagerConfig, PollMagagerConfig
+from .geoapi import GeoApi
+from .poll_manager import DefaultPollManagerConfig, PollMagagerConfig
 
 logging.basicConfig(level=logging.DEBUG)
 

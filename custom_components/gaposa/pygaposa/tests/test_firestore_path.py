@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from pygaposa.firebase import FirebaseApp, Firestore, FirestorePath, pathjoin
+from ..firebase import FirebaseApp, Firestore, FirestorePath, pathjoin
 
 
 def test_init():

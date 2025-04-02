@@ -4,13 +4,13 @@ from typing import Dict, List
 
 from typeguard import check_type
 
-from pygaposa.api import GaposaApi
-from pygaposa.api_types import ClientInfo, UserInfo
-from pygaposa.device import Device
-from pygaposa.firebase import FirestorePath
-from pygaposa.geoapi import GeoApi
-from pygaposa.model import Named
-from pygaposa.poll_manager import PollMagagerConfig
+from .api import GaposaApi
+from .api_types import ClientInfo, UserInfo
+from .device import Device
+from .firebase import FirestorePath
+from .geoapi import GeoApi
+from .model import Named
+from .poll_manager import PollMagagerConfig
 
 
 class User(Named):

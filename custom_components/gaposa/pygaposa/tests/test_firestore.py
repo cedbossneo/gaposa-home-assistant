@@ -7,7 +7,7 @@ import aiohttp
 import pytest
 from aioresponses import CallbackResult, aioresponses
 
-from pygaposa.firebase import FirebaseApp, Firestore, FirestoreDocumentType
+from ..firebase import FirebaseApp, Firestore, FirestoreDocumentType
 
 mock_document: FirestoreDocumentType = {
     "name": "Mock Document",
