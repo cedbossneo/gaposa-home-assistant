@@ -88,7 +88,7 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
         """Update the attributes based on motor status."""
         if hasattr(self._motor, 'percent'):
             # Position inversée: 0 = fermé, 100 = ouvert dans HA
-            self._attr_current_cover_position = 100 - self._motor.percent
+            self._attr_current_cover_position = self._motor.percent
             self._attr_is_closed = self._motor.percent >= 95
             _LOGGER.debug(
                 "Mise à jour du moteur %s (ID: %s): position=%s, fermé=%s",
@@ -127,7 +127,7 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
         """Set the cover position."""
         position = kwargs.get(ATTR_POSITION, 50)
         # Conversion de position: 0 = fermé, 100 = ouvert dans HA
-        device_position = 100 - position
+        device_position = position
         # Utilisez la position directement puisque set_position n'existe pas dans l'API
         if device_position == 0:
             await self._motor.up()
