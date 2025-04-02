@@ -27,13 +27,22 @@ async def async_setup_entry(
     """Set up the Gaposa covers."""
     hub: GaposaHub = hass.data[DOMAIN][entry.entry_id]
     
+    # Forcer une mise à jour des données pour s'assurer d'avoir les moteurs
+    await hub.update_data()
+    
     # Création des entités pour chaque moteur
     entities = []
+    _LOGGER.debug("Nombre de moteurs disponibles: %d", len(hub.motors))
+    
     for motor in hub.motors:
+        _LOGGER.debug("Ajout du moteur %s (ID: %s)", motor.name, motor.id)
         entities.append(GaposaCover(hub, motor))
     
     if entities:
+        _LOGGER.info("Ajout de %d entités cover", len(entities))
         async_add_entities(entities)
+    else:
+        _LOGGER.warning("Aucune entité cover à ajouter")
 
 
 class GaposaCover(CoverEntity):
