@@ -65,10 +65,17 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
         self._attr_name = motor.name
         self._attr_unique_id = f"{motor.id}"
         self._attr_device_class = CoverDeviceClass.SHADE
+        
+        # Activer toutes les fonctionnalités même si certains états sont incertains
         self._attr_supported_features = (
-            CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | 
-            CoverEntityFeature.STOP | CoverEntityFeature.SET_POSITION
+            CoverEntityFeature.OPEN | 
+            CoverEntityFeature.CLOSE | 
+            CoverEntityFeature.STOP |
+            CoverEntityFeature.SET_POSITION
         )
+        
+        # Paramètre pour autoriser les actions même quand l'état est identique
+        self._ignore_state = True
         
         # Mise à jour initiale
         self._update_attrs()
@@ -89,21 +96,36 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
         if hasattr(self._motor, 'percent'):
             # Position inversée: 0 = fermé, 100 = ouvert dans HA
             self._attr_current_cover_position = self._motor.percent
-            self._attr_is_closed = self._motor.percent >= 95
+            self._attr_is_closed = self._motor.percent < 5
             _LOGGER.debug(
-                "Mise à jour du moteur %s (ID: %s): position=%s, fermé=%s",
+                "Mise à jour du store %s (ID: %s): position=%s, fermé=%s",
                 self._attr_name, self._motor_id, self._attr_current_cover_position, self._attr_is_closed
             )
         else:
             _LOGGER.warning(
-                "Le moteur %s n'a pas d'attribut 'percent'. Attributs disponibles: %s",
+                "Le store %s n'a pas d'attribut 'percent'. Attributs disponibles: %s",
                 self._attr_name, dir(self._motor)
             )
             self._attr_current_cover_position = None
             self._attr_is_closed = None
     
+    @property
+    def is_opening(self) -> bool:
+        """Return if the cover is opening."""
+        # Nous retournons toujours False car nous ne pouvons pas être certain 
+        # de l'état d'ouverture en cours
+        return False
+
+    @property
+    def is_closing(self) -> bool:
+        """Return if the cover is closing."""
+        # Nous retournons toujours False car nous ne pouvons pas être certain 
+        # de l'état de fermeture en cours
+        return False
+    
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
+        _LOGGER.debug("Commande d'ouverture pour %s (ID: %s)", self._attr_name, self._motor_id)
         await self._motor.up()
         self._update_attrs()
         # Déclencher une mise à jour immédiate pour tous les appareils
@@ -111,6 +133,7 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
     
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close the cover."""
+        _LOGGER.debug("Commande de fermeture pour %s (ID: %s)", self._attr_name, self._motor_id)
         await self._motor.down()
         self._update_attrs()
         # Déclencher une mise à jour immédiate pour tous les appareils
@@ -118,6 +141,7 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
     
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
+        _LOGGER.debug("Commande d'arrêt pour %s (ID: %s)", self._attr_name, self._motor_id)
         await self._motor.stop()
         self._update_attrs()
         # Déclencher une mise à jour immédiate pour tous les appareils
@@ -126,16 +150,21 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
     async def async_set_cover_position(self, **kwargs: Any) -> None:
         """Set the cover position."""
         position = kwargs.get(ATTR_POSITION, 50)
-        # Conversion de position: 0 = fermé, 100 = ouvert dans HA
+        _LOGGER.debug(
+            "Définition de la position pour %s (ID: %s) à %s", 
+            self._attr_name, self._motor_id, position
+        )
+        
+        # Conversion de position selon la logique d'API de Gaposa
         device_position = position
-        # Utilisez la position directement puisque set_position n'existe pas dans l'API
-        if device_position == 0:
+        
+        # Commandes simplifiées basées sur la position
+        if device_position >= 95:  # Presque complètement ouvert
             await self._motor.up()
-        elif device_position == 100:
+        elif device_position <= 5:  # Presque complètement fermé
             await self._motor.down()
         else:
-            # Si vous avez besoin d'une méthode pour définir une position spécifique
-            # vous devrez l'implémenter
+            # Position intermédiaire - utiliser la position preset si disponible
             await self._motor.preset()
         
         self._update_attrs()
