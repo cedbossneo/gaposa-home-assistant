@@ -4,7 +4,7 @@
   "codeowners": ["@cedbossneo"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/cedbossneo/gaposa-homeassistant",
+  "documentation": "https://github.com/cedbossneo/gaposa-home-assistant",
   "iot_class": "cloud_polling",
   "requirements": ["typeguard", "suncalc"],
   "version": "0.1.0"
