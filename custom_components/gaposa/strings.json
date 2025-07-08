@@ -17,5 +17,50 @@
     "abort": {
       "already_configured": "Compte déjà configuré"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configuration des volets Gaposa",
+        "description": "{info}",
+        "data": {
+          "action": "Action",
+          "cover_to_calibrate": "Volet à configurer"
+        }
+      },
+      "view_calibrations": {
+        "title": "Calibrations actuelles",
+        "description": "Voici les calibrations enregistrées :\n\n{calibrations}",
+        "data": {
+          "back": "Retour"
+        }
+      },
+      "start_calibration": {
+        "title": "Calibration de {cover_name}",
+        "description": "{instructions}",
+        "data": {
+          "start_calibration": "Commencer la calibration"
+        }
+      },
+      "calibration_inprogress": {
+        "title": "Calibration en cours - {elapsed_time}s",
+        "description": "{instructions}",
+        "data": {
+          "stop_calibration": "Arrêter la calibration",
+          "cancel_calibration": "Annuler"
+        }
+      },
+      "calibration_complete": {
+        "title": "Calibration terminée",
+        "description": "{result}",
+        "data": {
+          "save": "Sauvegarder",
+          "recalibrate": "Recalibrer"
+        }
+      }
+    },
+    "abort": {
+      "no_covers_found": "Aucun volet trouvé pour cette intégration"
+    }
   }
 }

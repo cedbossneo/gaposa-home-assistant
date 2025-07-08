@@ -1,8 +1,9 @@
 """Support for Gaposa covers."""
 from __future__ import annotations
 
+import asyncio
 import logging
-from typing import Any, cast
+from typing import Any
 
 from homeassistant.components.cover import (
     ATTR_POSITION,
@@ -19,7 +20,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .coordinator import GaposaDataUpdateCoordinator
-from .const import DOMAIN
+from .const import DOMAIN, DEFAULT_TRAVEL_TIME
 from .hub import GaposaHub
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ async def async_setup_entry(
 
 
 class GaposaCover(CoordinatorEntity, CoverEntity):
-    """Representation of a Gaposa cover (with optimistic mode)."""
+    """Representation of a Gaposa cover (with timing-based position control)."""
 
     coordinator: GaposaDataUpdateCoordinator
 
@@ -79,23 +80,47 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
     _attr_supported_features = (
             CoverEntityFeature.OPEN |
             CoverEntityFeature.CLOSE |
-            CoverEntityFeature.STOP
+            CoverEntityFeature.STOP |
+            CoverEntityFeature.SET_POSITION  # Enable position control
     )
     # Indicate that state updates are pushed from the coordinator
     _attr_should_poll = False
-    # No need for a custom _ignore_state flag
 
     def __init__(self, coordinator: GaposaDataUpdateCoordinator, motor_command_obj, initial_motor_data) -> None:
         """Initialize the cover."""
         super().__init__(coordinator)
-        # self._hub = hub # Maybe not needed if commands are on motor obj
-        self._motor_command_obj = motor_command_obj # Use this for sending commands
+        self._motor_command_obj = motor_command_obj
         self._motor_id = initial_motor_data.id
         self._attr_name = initial_motor_data.name
         self._attr_unique_id = f"{initial_motor_data.id}"
 
-        # Initialize state attributes based on the *initial* data
-        self._update_attrs(initial_motor_data) # Pass initial data
+        # Position control timing variables
+        self._travel_time = None
+        self._movement_start_time = None
+        self._movement_task = None
+        self._target_position = None
+        self._start_position = None
+
+        # Initialize state attributes based on the initial data
+        self._update_attrs(initial_motor_data)
+
+        # Load calibration data from config options
+        self._load_calibration_data()
+
+    def _load_calibration_data(self) -> None:
+        """Load calibration data from config entry options."""
+        if self.coordinator.config_entry.options:
+            entity_id = f"cover.{self.unique_id}"
+            self._travel_time = self.coordinator.config_entry.options.get(entity_id, DEFAULT_TRAVEL_TIME)
+            _LOGGER.debug("Loaded travel time for %s: %s seconds", self._attr_name, self._travel_time)
+        else:
+            self._travel_time = DEFAULT_TRAVEL_TIME
+            _LOGGER.debug("Using default travel time for %s: %s seconds", self._attr_name, self._travel_time)
+
+    @property
+    def travel_time(self) -> float:
+        """Return the calibrated travel time for this cover."""
+        return self._travel_time or DEFAULT_TRAVEL_TIME
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -148,17 +173,22 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
 
     async def async_open_cover(self, **kwargs: Any) -> None:
         """Open the cover."""
-        _LOGGER.debug("Optimistic: Sending OPEN command to %s", self._attr_name)
+        _LOGGER.debug("Sending OPEN command to %s", self._attr_name)
+
+        # Cancel any existing movement
+        if self._movement_task and not self._movement_task.done():
+            self._movement_task.cancel()
+
         try:
             await self._motor_command_obj.up()
 
             # --- OPTIMISTIC UPDATE ---
             self._attr_is_opening = True
             self._attr_is_closing = False
-            # Assume it goes to fully open, or None if you don't want to guess position
-            self._attr_current_cover_position = 100
+            # Don't set position to 100 immediately - let coordinator update handle actual position
+            # Only update is_closed state
             self._attr_is_closed = False
-            self.async_write_ha_state() # Update HA state immediately
+            self.async_write_ha_state()
             # -------------------------
 
             # Request refresh to get actual state later
@@ -169,20 +199,24 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
             self._attr_is_opening = False
             self.async_write_ha_state()
 
-
     async def async_close_cover(self, **kwargs: Any) -> None:
         """Close the cover."""
-        _LOGGER.debug("Optimistic: Sending CLOSE command to %s", self._attr_name)
+        _LOGGER.debug("Sending CLOSE command to %s", self._attr_name)
+
+        # Cancel any existing movement
+        if self._movement_task and not self._movement_task.done():
+            self._movement_task.cancel()
+
         try:
             await self._motor_command_obj.down()
 
             # --- OPTIMISTIC UPDATE ---
             self._attr_is_closing = True
             self._attr_is_opening = False
-            # Assume it goes to fully closed
-            self._attr_current_cover_position = 0
+            # Don't set position to 0 immediately - let coordinator update handle actual position
+            # Only update is_closed state
             self._attr_is_closed = True
-            self.async_write_ha_state() # Update HA state immediately
+            self.async_write_ha_state()
             # -------------------------
 
             # Request refresh to get actual state later
@@ -195,7 +229,12 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
 
     async def async_stop_cover(self, **kwargs: Any) -> None:
         """Stop the cover."""
-        _LOGGER.debug("Optimistic: Sending STOP command to %s", self._attr_name)
+        _LOGGER.debug("Sending STOP command to %s", self._attr_name)
+
+        # Cancel any existing movement
+        if self._movement_task and not self._movement_task.done():
+            self._movement_task.cancel()
+
         try:
             await self._motor_command_obj.stop()
 
@@ -203,10 +242,8 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
             # Stopping means it's no longer opening or closing
             self._attr_is_closing = False
             self._attr_is_opening = False
-            # We don't know the position after stop, so don't change _attr_current_cover_position
-            # unless the stop command *always* results in a known state (unlikely)
-            # Keep _attr_is_closed as it was before stop.
-            self.async_write_ha_state() # Update HA state immediately
+            # Don't change position - we don't know where it stopped
+            self.async_write_ha_state()
             # -------------------------
 
             # Request refresh to get actual state later
@@ -219,49 +256,85 @@ class GaposaCover(CoordinatorEntity, CoverEntity):
             self.async_write_ha_state()
 
     async def async_set_cover_position(self, **kwargs: Any) -> None:
-        """Set the cover position."""
-        position = kwargs[ATTR_POSITION] # No need for .get() if feature is supported
+        """Set the cover to a specific position using timing."""
+        target_position = kwargs[ATTR_POSITION]
+        current_position = self._attr_current_cover_position or 0
+
         _LOGGER.debug(
-            "Optimistic: Sending SET_POSITION %s command to %s",
-            position, self._attr_name
+            "Setting %s position from %s to %s (travel time: %s seconds)",
+            self._attr_name, current_position, target_position, self.travel_time
         )
 
-        # --- Choose command based on position ---
-        # (Your existing logic seems fine, assumes preset handles intermediate)
+        # Cancel any existing movement
+        if self._movement_task and not self._movement_task.done():
+            self._movement_task.cancel()
+
+        # Calculate movement parameters
+        position_diff = abs(target_position - current_position)
+        movement_time = (position_diff / 100.0) * self.travel_time
+
+        if movement_time < 0.5:  # Too small movement, ignore
+            _LOGGER.debug("Movement too small for %s, ignoring", self._attr_name)
+            # Still update the position optimistically for small movements
+            self._attr_current_cover_position = target_position
+            self._attr_is_closed = target_position <= 5
+            self.async_write_ha_state()
+            return
+
         try:
-            if position >= 95:
+            # Start movement
+            if target_position > current_position:
+                # Opening
                 await self._motor_command_obj.up()
-            elif position <= 5:
-                await self._motor_command_obj.down()
+                self._attr_is_opening = True
+                self._attr_is_closing = False
             else:
-                # Check if your motor object actually supports a position command
-                # If it only has UP/DOWN/STOP/PRESET, setting exact position isn't possible
-                # Maybe just call preset for any intermediate value?
-                if hasattr(self._motor_command_obj, 'set_position'):
-                    # Assuming set_position takes HA standard 0-100
-                    await self._motor_command_obj.set_position(position)
-                elif hasattr(self._motor_command_obj, 'preset'):
-                    _LOGGER.warning("Motor %s has no set_position, using preset for position %s", self._attr_name, position)
-                    await self._motor_command_obj.preset() # Or maybe stop? Depends on device.
-                else:
-                    _LOGGER.error("Motor %s cannot be set to position %s", self._attr_name, position)
-                    return # Don't do optimistic update if command fails
+                # Closing
+                await self._motor_command_obj.down()
+                self._attr_is_opening = False
+                self._attr_is_closing = True
 
-            # --- OPTIMISTIC UPDATE ---
-            self._attr_current_cover_position = position # Assume it reaches the target
-            self._attr_is_closed = position <= 5
-            # We don't know if it's opening or closing to reach the position
-            self._attr_is_opening = False # Safer to set both false
-            self._attr_is_closing = False
-            self.async_write_ha_state() # Update HA state immediately
-            # -------------------------
+            # Store movement parameters
+            self._target_position = target_position
+            self._start_position = current_position
+            self._movement_start_time = self.hass.loop.time()
 
-            # Request refresh to get actual state later
-            await self.coordinator.async_request_refresh()
+            # Update state optimistically for position control
+            self._attr_current_cover_position = target_position
+            self._attr_is_closed = target_position <= 5
+            self.async_write_ha_state()
+
+            # Schedule stop command
+            self._movement_task = asyncio.create_task(
+                self._stop_after_delay(movement_time)
+            )
+
         except Exception as e:
-            _LOGGER.error("Error sending SET_POSITION command to %s: %s", self._attr_name, e)
-            # Reset optimistic flags on error? Maybe not needed for position.
+            _LOGGER.error("Error setting position for %s: %s", self._attr_name, e)
+            self._attr_is_opening = False
+            self._attr_is_closing = False
+            self.async_write_ha_state()
 
+    async def _stop_after_delay(self, delay: float) -> None:
+        """Stop the cover after a specified delay."""
+        try:
+            await asyncio.sleep(delay)
+            await self._motor_command_obj.stop()
+
+            # Update state
+            self._attr_is_opening = False
+            self._attr_is_closing = False
+            self.async_write_ha_state()
+
+            _LOGGER.debug("Stopped %s after %s seconds", self._attr_name, delay)
+
+            # Request refresh to get actual state
+            await self.coordinator.async_request_refresh()
+
+        except asyncio.CancelledError:
+            _LOGGER.debug("Movement cancelled for %s", self._attr_name)
+        except Exception as e:
+            _LOGGER.error("Error stopping %s: %s", self._attr_name, e)
 
     @property
     def device_info(self) -> DeviceInfo:

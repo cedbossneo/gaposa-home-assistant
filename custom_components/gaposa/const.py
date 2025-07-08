@@ -5,3 +5,8 @@ API_KEY = "AIzaSyCBNj_bYZ6VmHU8iNuVmvuj0HQLpv4DTfE"
 
 # Intervalle de mise à jour en secondes (si nécessaire)
 UPDATE_INTERVAL = 30
+
+# Calibration constants
+CONF_TRAVEL_TIME = "travel_time"
+CONF_CALIBRATION_DATA = "calibration_data"
+DEFAULT_TRAVEL_TIME = 30  # Default travel time in seconds if not calibrated
