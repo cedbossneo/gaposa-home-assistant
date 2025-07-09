@@ -11,7 +11,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant import exceptions
 from homeassistant.helpers import entity_registry as er
 
-from .const import DOMAIN, CONF_TRAVEL_TIME, CONF_CALIBRATION_DATA, CONF_OPEN_TIME, CONF_CLOSE_TIME
+from .const import DOMAIN
 from .hub import GaposaHub
 
 _LOGGER = logging.getLogger(__name__)
@@ -121,8 +121,20 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         entries = er.async_entries_for_config_entry(
             entity_registry, self.config_entry.entry_id
         )
-        covers = {e.entity_id: f"{e.original_name or e.name} {'✓' if self.options.get(e.entity_id) else '⚠️'}"
-                 for e in entries if e.entity_id.startswith("cover.")}
+
+        covers = {}
+        for e in entries:
+            if e.entity_id.startswith("cover."):
+                # Check for new separate open/close times
+                open_time = self.options.get(f"{e.entity_id}_open")
+                close_time = self.options.get(f"{e.entity_id}_close")
+                legacy_time = self.options.get(e.entity_id)
+
+                # Consider calibrated if we have both open and close times, or at least one
+                is_calibrated = bool(open_time and close_time) or bool(legacy_time)
+                status_icon = '✓' if is_calibrated else '⚠️'
+
+                covers[e.entity_id] = f"{e.original_name or e.name} {status_icon}"
 
         if not covers:
             return self.async_abort(reason="no_covers_found")
@@ -265,45 +277,73 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         )
 
     async def async_step_manual_calibration(self, user_input=None):
-        """Allow manual setting of travel time."""
+        """Allow manual setting of open and close travel times."""
         if user_input is not None:
-            travel_time = user_input.get("travel_time")
-            if travel_time and 5 <= travel_time <= 300:  # 5s to 5min range
-                self.options[self.current_cover_info["entity_id"]] = travel_time
+            open_time = user_input.get("open_time")
+            close_time = user_input.get("close_time")
+
+            if (open_time and 5 <= open_time <= 300 and
+                close_time and 5 <= close_time <= 300):
+                entity_id = self.current_cover_info["entity_id"]
+
+                # Set separate open and close times
+                self.options[f"{entity_id}_open"] = open_time
+                self.options[f"{entity_id}_close"] = close_time
+
+                # Remove legacy travel_time if it exists
+                if entity_id in self.options:
+                    del self.options[entity_id]
+
                 return self.async_create_entry(
                     title="",
                     data=self.options,
-                    description=f"Travel time set to {travel_time} seconds for {self.current_cover_info['name']}"
+                    description=f"Manual calibration set for {self.current_cover_info['name']}: Open {open_time}s, Close {close_time}s"
                 )
             else:
                 return self.async_show_form(
                     step_id="manual_calibration",
                     data_schema=vol.Schema({
-                        vol.Required("travel_time", default=30): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
+                        vol.Required("open_time", default=30): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
+                        vol.Required("close_time", default=25): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
                     }),
-                    errors={"travel_time": "invalid_range"},
+                    errors={"base": "invalid_range"},
                     description_placeholders={
                         "cover_name": self.current_cover_info.get("name", "Unknown"),
-                        "info": "Travel time must be between 5 and 300 seconds."
+                        "info": "Both open and close times must be between 5 and 300 seconds."
                     }
                 )
 
-        current_calibration = self.options.get(self.current_cover_info["entity_id"], 30)
+        entity_id = self.current_cover_info["entity_id"]
+
+        # Get current calibration values
+        current_open_time = self.options.get(f"{entity_id}_open", 30)
+        current_close_time = self.options.get(f"{entity_id}_close", 25)
+
+        # If only legacy travel_time exists, use it as default for both
+        legacy_time = self.options.get(entity_id)
+        if legacy_time and not self.options.get(f"{entity_id}_open"):
+            current_open_time = legacy_time
+            current_close_time = legacy_time
 
         return self.async_show_form(
             step_id="manual_calibration",
             data_schema=vol.Schema({
-                vol.Required("travel_time", default=int(current_calibration)): vol.All(
+                vol.Required("open_time", default=int(current_open_time)): vol.All(
+                    vol.Coerce(int), vol.Range(min=5, max=300)
+                ),
+                vol.Required("close_time", default=int(current_close_time)): vol.All(
                     vol.Coerce(int), vol.Range(min=5, max=300)
                 ),
             }),
             description_placeholders={
                 "cover_name": self.current_cover_info.get("name", "Unknown"),
                 "info": (
-                    "Enter the time in seconds it takes for this cover to travel "
-                    "from fully closed to fully open.\n\n"
+                    "Enter the time in seconds for each direction:\n\n"
+                    "• Open time: Time to go from fully closed to fully open\n"
+                    "• Close time: Time to go from fully open to fully closed\n\n"
+                    "Close time is often faster due to gravity.\n"
                     "If you're unsure, use auto-calibration instead.\n\n"
-                    "Range: 5-300 seconds"
+                    "Range: 5-300 seconds for each"
                 )
             }
         )
