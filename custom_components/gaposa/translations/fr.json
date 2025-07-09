@@ -7,15 +7,151 @@
           "email": "Email",
           "password": "Mot de passe"
         }
+      },
+      "init": {
+        "title": "Configuration des volets Gaposa",
+        "description": "Configurez vos volets Gaposa. {info}",
+        "data": {
+          "action": "Action",
+          "cover_to_calibrate": "Volet à configurer"
+        },
+        "data_description": {
+          "action": "Choisissez ce que vous souhaitez configurer"
+        }
+      },
+      "calibration_instructions": {
+        "title": "Calibration des volets - {cover_name}",
+        "description": "État actuel: {current_status}\n\n{instructions}",
+        "data": {
+          "understand_and_continue": "J'ai lu et compris les instructions de sécurité et je souhaite continuer"
+        }
+      },
+      "select_calibration_direction": {
+        "title": "Sélection de la direction de calibration",
+        "description": "Choisissez quelle(s) direction(s) calibrer pour {cover_name}.\n\n{info}",
+        "data": {
+          "direction": "Direction à calibrer"
+        }
+      },
+      "start_calibration": {
+        "title": "Démarrer la calibration {direction} - {cover_name}",
+        "description": "{instructions}",
+        "data": {
+          "start_calibration": "Démarrer la calibration"
+        }
+      },
+      "calibration_inprogress": {
+        "title": "Calibration en cours - {direction}",
+        "description": "Temps écoulé: {elapsed_time} secondes\n\n{instructions}",
+        "data": {
+          "stop_calibration": "Arrêter la calibration",
+          "cancel_calibration": "Annuler"
+        }
+      },
+      "calibration_complete": {
+        "title": "Calibration terminée - {cover_name}",
+        "description": "{result}",
+        "data": {
+          "save": "Sauvegarder et terminer",
+          "calibrate_other": "Calibrer l'autre direction",
+          "recalibrate": "Recalibrer"
+        }
+      },
+      "manual_calibration": {
+        "title": "Temps de course manuel - {cover_name}",
+        "description": "{info}",
+        "data": {
+          "travel_time": "Temps de course (secondes)"
+        }
+      },
+      "view_calibrations": {
+        "title": "Calibrations actuelles",
+        "description": "{calibrations}\n\n{summary}",
+        "data": {
+          "back": "Retour au menu principal",
+          "delete_calibration": "Supprimer la calibration",
+          "cover_to_delete": "Volet à supprimer"
+        }
       }
     },
     "error": {
-      "invalid_auth": "Identifiant ou mot de passe incorrect",
-      "cannot_connect": "Impossible de se connecter au serveur Gaposa",
-      "unknown": "Erreur inattendue"
+      "cannot_connect": "Échec de la connexion",
+      "invalid_auth": "Authentification invalide",
+      "unknown": "Erreur inattendue",
+      "invalid_range": "La valeur doit être entre 5 et 300 secondes"
     },
     "abort": {
-      "already_configured": "Compte déjà configuré"
+      "already_configured": "L'appareil est déjà configuré",
+      "no_covers_found": "Aucun volet trouvé"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Configuration des volets Gaposa",
+        "description": "Configurez vos volets Gaposa. {info}",
+        "data": {
+          "action": "Action",
+          "cover_to_calibrate": "Volet à configurer"
+        }
+      },
+      "calibration_instructions": {
+        "title": "Calibration des volets - {cover_name}",
+        "description": "État actuel: {current_status}\n\n{instructions}",
+        "data": {
+          "understand_and_continue": "J'ai lu et compris les instructions de sécurité et je souhaite continuer"
+        }
+      },
+      "select_calibration_direction": {
+        "title": "Sélection de la direction de calibration",
+        "description": "Choisissez quelle(s) direction(s) calibrer pour {cover_name}.\n\n{info}",
+        "data": {
+          "direction": "Direction à calibrer"
+        }
+      },
+      "start_calibration": {
+        "title": "Démarrer la calibration {direction} - {cover_name}",
+        "description": "{instructions}",
+        "data": {
+          "start_calibration": "Démarrer la calibration"
+        }
+      },
+      "calibration_inprogress": {
+        "title": "Calibration en cours - {direction}",
+        "description": "Temps écoulé: {elapsed_time} secondes\n\n{instructions}",
+        "data": {
+          "stop_calibration": "Arrêter la calibration",
+          "cancel_calibration": "Annuler"
+        }
+      },
+      "calibration_complete": {
+        "title": "Calibration terminée - {cover_name}",
+        "description": "{result}",
+        "data": {
+          "save": "Sauvegarder et terminer",
+          "calibrate_other": "Calibrer l'autre direction",
+          "recalibrate": "Recalibrer"
+        }
+      },
+      "manual_calibration": {
+        "title": "Temps de course manuel - {cover_name}",
+        "description": "{info}",
+        "data": {
+          "travel_time": "Temps de course (secondes)"
+        }
+      },
+      "view_calibrations": {
+        "title": "Calibrations actuelles",
+        "description": "{calibrations}\n\n{summary}",
+        "data": {
+          "back": "Retour au menu principal",
+          "delete_calibration": "Supprimer la calibration",
+          "cover_to_delete": "Volet à supprimer"
+        }
+      }
+    },
+    "error": {
+      "invalid_range": "La valeur doit être entre 5 et 300 secondes"
     }
   }
 }

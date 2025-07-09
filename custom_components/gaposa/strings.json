@@ -2,65 +2,156 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connection à Gaposa",
+        "title": "Connect to Gaposa",
         "data": {
           "email": "Email",
-          "password": "Mot de passe"
+          "password": "Password"
+        }
+      },
+      "init": {
+        "title": "Configure Gaposa Covers",
+        "description": "Configure your Gaposa covers. {info}",
+        "data": {
+          "action": "Action",
+          "cover_to_calibrate": "Cover to configure"
+        },
+        "data_description": {
+          "action": "Choose what you want to configure"
+        }
+      },
+      "calibration_instructions": {
+        "title": "Cover Calibration - {cover_name}",
+        "description": "Current status: {current_status}\n\n{instructions}",
+        "data": {
+          "understand_and_continue": "I have read and understood the safety instructions and want to continue"
+        }
+      },
+      "select_calibration_direction": {
+        "title": "Select Calibration Direction",
+        "description": "Choose which direction(s) to calibrate for {cover_name}.\n\n{info}",
+        "data": {
+          "direction": "Direction to calibrate"
+        }
+      },
+      "start_calibration": {
+        "title": "Start {direction} Calibration - {cover_name}",
+        "description": "{instructions}",
+        "data": {
+          "start_calibration": "Start Calibration"
+        }
+      },
+      "calibration_inprogress": {
+        "title": "Calibration in Progress - {direction}",
+        "description": "Elapsed time: {elapsed_time} seconds\n\n{instructions}",
+        "data": {
+          "stop_calibration": "Stop Calibration",
+          "cancel_calibration": "Cancel"
+        }
+      },
+      "calibration_complete": {
+        "title": "Calibration Complete - {cover_name}",
+        "description": "{result}",
+        "data": {
+          "save": "Save & Finish",
+          "calibrate_other": "Calibrate Other Direction",
+          "recalibrate": "Recalibrate"
+        }
+      },
+      "manual_calibration": {
+        "title": "Manual Travel Time - {cover_name}",
+        "description": "{info}",
+        "data": {
+          "travel_time": "Travel time (seconds)"
+        }
+      },
+      "view_calibrations": {
+        "title": "Current Calibrations",
+        "description": "{calibrations}\n\n{summary}",
+        "data": {
+          "back": "Back to Main Menu",
+          "delete_calibration": "Delete Calibration",
+          "cover_to_delete": "Cover to delete"
         }
       }
     },
     "error": {
-      "invalid_auth": "Identifiant ou mot de passe incorrect",
-      "cannot_connect": "Impossible de se connecter au serveur Gaposa",
-      "unknown": "Erreur inattendue"
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error",
+      "invalid_range": "Value must be between 5 and 300 seconds"
     },
     "abort": {
-      "already_configured": "Compte déjà configuré"
+      "already_configured": "Device is already configured",
+      "no_covers_found": "No covers found"
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "Configuration des volets Gaposa",
-        "description": "{info}",
+        "title": "Configure Gaposa Covers",
+        "description": "Configure your Gaposa covers. {info}",
         "data": {
           "action": "Action",
-          "cover_to_calibrate": "Volet à configurer"
+          "cover_to_calibrate": "Cover to configure"
         }
       },
-      "view_calibrations": {
-        "title": "Calibrations actuelles",
-        "description": "Voici les calibrations enregistrées :\n\n{calibrations}",
+      "calibration_instructions": {
+        "title": "Cover Calibration - {cover_name}",
+        "description": "Current status: {current_status}\n\n{instructions}",
         "data": {
-          "back": "Retour"
+          "understand_and_continue": "I have read and understood the safety instructions and want to continue"
+        }
+      },
+      "select_calibration_direction": {
+        "title": "Select Calibration Direction",
+        "description": "Choose which direction(s) to calibrate for {cover_name}.\n\n{info}",
+        "data": {
+          "direction": "Direction to calibrate"
         }
       },
       "start_calibration": {
-        "title": "Calibration de {cover_name}",
+        "title": "Start {direction} Calibration - {cover_name}",
         "description": "{instructions}",
         "data": {
-          "start_calibration": "Commencer la calibration"
+          "start_calibration": "Start Calibration"
         }
       },
       "calibration_inprogress": {
-        "title": "Calibration en cours - {elapsed_time}s",
-        "description": "{instructions}",
+        "title": "Calibration in Progress - {direction}",
+        "description": "Elapsed time: {elapsed_time} seconds\n\n{instructions}",
         "data": {
-          "stop_calibration": "Arrêter la calibration",
-          "cancel_calibration": "Annuler"
+          "stop_calibration": "Stop Calibration",
+          "cancel_calibration": "Cancel"
         }
       },
       "calibration_complete": {
-        "title": "Calibration terminée",
+        "title": "Calibration Complete - {cover_name}",
         "description": "{result}",
         "data": {
-          "save": "Sauvegarder",
-          "recalibrate": "Recalibrer"
+          "save": "Save & Finish",
+          "calibrate_other": "Calibrate Other Direction",
+          "recalibrate": "Recalibrate"
+        }
+      },
+      "manual_calibration": {
+        "title": "Manual Travel Time - {cover_name}",
+        "description": "{info}",
+        "data": {
+          "travel_time": "Travel time (seconds)"
+        }
+      },
+      "view_calibrations": {
+        "title": "Current Calibrations",
+        "description": "{calibrations}\n\n{summary}",
+        "data": {
+          "back": "Back to Main Menu",
+          "delete_calibration": "Delete Calibration",
+          "cover_to_delete": "Cover to delete"
         }
       }
     },
-    "abort": {
-      "no_covers_found": "Aucun volet trouvé pour cette intégration"
+    "error": {
+      "invalid_range": "Value must be between 5 and 300 seconds"
     }
   }
 }
